@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Clicker Empire</title>
+<title>Coin Quest</title>
 
 <style>
 * {
@@ -13,409 +13,588 @@
 
 body {
   margin: 0;
+  padding: 15px;
   font-family: Arial, sans-serif;
-  background: linear-gradient(135deg, #10152e, #30205b);
+  background: #17203b;
   color: white;
   text-align: center;
-  min-height: 100vh;
-}
-
-header {
-  padding: 28px 12px 10px;
 }
 
 h1 {
-  font-size: 38px;
-  margin: 0 0 8px;
+  color: #ffdc57;
+  margin-bottom: 5px;
 }
 
 p {
-  color: #c9c9e8;
+  color: #d9e3ff;
 }
 
-main {
-  width: min(92%, 520px);
-  margin: 20px auto;
-}
-
-.panel {
-  background: #211e43;
-  border: 1px solid #51447e;
-  border-radius: 18px;
-  padding: 22px;
-  margin-bottom: 16px;
-}
-
-.coins {
-  color: #ffe477;
-  font-size: 38px;
-  font-weight: bold;
-  margin: 12px;
-}
-
-.score {
-  color: #8dffcc;
-  font-size: 28px;
-  font-weight: bold;
-  margin: 10px;
-}
-
-#clicker {
-  width: 175px;
-  height: 175px;
-  border: 0;
-  border-radius: 50%;
-  background: linear-gradient(145deg, #ffe477, #ff9e39);
-  font-size: 75px;
-  cursor: pointer;
-  box-shadow: 0 8px 0 #a95a28;
-  transition: transform 0.1s;
-}
-
-#clicker:active {
-  transform: scale(0.94);
-  box-shadow: 0 3px 0 #a95a28;
-}
-
-.upgrade {
+.stats {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  justify-content: center;
+  flex-wrap: wrap;
   gap: 12px;
-  text-align: left;
-  margin-top: 12px;
-  background: #302b59;
-  border-radius: 12px;
-  padding: 14px;
+  margin: 18px 0;
 }
 
-.upgrade button, .reset {
-  border: 0;
-  border-radius: 9px;
-  padding: 11px 14px;
-  background: #8d78ff;
+.stat {
+  background: #27375c;
+  padding: 12px 18px;
+  border-radius: 12px;
+}
+
+#game {
+  display: block;
+  width: 100%;
+  max-width: 900px;
+  height: auto;
+  margin: auto;
+  border: 3px solid #ffffff;
+  border-radius: 12px;
+  background: #65c8ff;
+  touch-action: none;
+}
+
+.controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin: 15px auto;
+}
+
+.controls button {
+  width: 75px;
+  height: 65px;
+  border: none;
+  border-radius: 15px;
+  background: #5868dc;
   color: white;
+  font-size: 28px;
+  cursor: pointer;
+  touch-action: none;
+}
+
+.controls button:active {
+  background: #8592ff;
+}
+
+#restart {
+  padding: 12px 22px;
+  border: none;
+  border-radius: 10px;
+  background: #ffcb48;
+  color: #29203b;
   font-weight: bold;
+  font-size: 16px;
   cursor: pointer;
 }
 
-.upgrade button:disabled {
-  background: #56516d;
-  cursor: not-allowed;
+.instructions {
+  max-width: 650px;
+  margin: 20px auto;
+  line-height: 1.7;
 }
 
-.small {
-  font-size: 13px;
-  color: #c9c9e8;
-}
-
-#message {
-  min-height: 20px;
-  color: #ffe477;
-}
-
-.notice {
-  font-size: 12px;
-  color: #aaa6d5;
-}
 </style>
 </head>
 
 <body>
 
-<header>
-  <h1>👑 Clicker Empire</h1>
-  <p>Start with nothing. Build a fortune.</p>
-</header>
+<h1>🪙 Coin Quest</h1>
+<p>Explore the world, collect coins, and beat your high score!</p>
 
-<main>
+<div class="stats">
+  <div class="stat">🪙 Coins: <b id="coins">0</b></div>
+  <div class="stat">⭐ Score: <b id="score">0</b></div>
+  <div class="stat">🏆 Best: <b id="best">0</b></div>
+</div>
 
-  <section class="panel">
-    <h2>⭐ Your Points</h2>
-    <div class="score" id="points">0</div>
-    <p>Personal high score: <b id="highScore">0</b></p>
-    <p>Level: <b id="level">1</b></p>
-    <p class="small">Points never decrease when you buy upgrades!</p>
-  </section>
+<canvas id="game" width="900" height="500"></canvas>
 
-  <section class="panel">
-    <p>Your spendable coins</p>
-    <div class="coins">🪙 <span id="coins">0</span></div>
-    <p>Per click: <b id="power">1</b> coins</p>
-    <p>Automatic income: <b id="income">0</b> coins/second</p>
+<div class="controls">
+  <button id="left" aria-label="Move left">⬅️</button>
+  <button id="right" aria-label="Move right">➡️</button>
+  <button id="jump" aria-label="Jump">⬆️</button>
+</div>
 
-    <button id="clicker" onclick="earnCoins()">🪙</button>
-    <p>Tap the coin to make money and earn points!</p>
-    <p id="message"></p>
-  </section>
+<button id="restart">Restart Game</button>
 
-  <section class="panel">
-    <h2>🏪 Upgrade Shop</h2>
-
-    <div class="upgrade">
-      <div>
-        <b>💪 Stronger Clicks</b>
-        <div class="small">Earn more coins per click</div>
-        <div class="small">Level: <span id="clickLevel">0</span></div>
-      </div>
-      <button id="clickBuy" onclick="buyUpgrade('click')">
-        25 🪙
-      </button>
-    </div>
-
-    <div class="upgrade">
-      <div>
-        <b>🏭 Coin Factory</b>
-        <div class="small">Earn coins automatically</div>
-        <div class="small">Level: <span id="factoryLevel">0</span></div>
-      </div>
-      <button id="factoryBuy" onclick="buyUpgrade('factory')">
-        50 🪙
-      </button>
-    </div>
-
-    <div class="upgrade">
-      <div>
-        <b>🚀 Money Multiplier</b>
-        <div class="small">Double your click power</div>
-        <div class="small">Level: <span id="multiplierLevel">0</span></div>
-      </div>
-      <button id="multiplierBuy" onclick="buyUpgrade('multiplier')">
-        250 🪙
-      </button>
-    </div>
-  </section>
-
-  <section class="panel">
-    <h2>🏆 Achievements</h2>
-    <p id="bronze">🔒 Bronze: Earn 100 points</p>
-    <p id="silver">🔒 Silver: Earn 1,000 points</p>
-    <p id="gold">🔒 Gold: Earn 10,000 points</p>
-  </section>
-
-  <section class="panel">
-    <h2>📊 Your Stats</h2>
-    <p>Total points earned: <b id="totalPoints">0</b></p>
-    <p>Total coins earned: <b id="totalCoins">0</b></p>
-    <p>Coins per second: <b id="incomeStat">0</b></p>
-    <button class="reset" onclick="resetGame()">Reset Game</button>
-    <p class="notice">
-      Your scores and progress are saved only in this browser
-      on this device. They are not shared with other devices.
-    </p>
-  </section>
-
-</main>
+<div class="instructions">
+  <b>How to play</b><br>
+  Computer: Use the arrow keys or A and D to move.
+  Press Space, W, or the Up Arrow to jump.<br>
+  Phone or tablet: Hold the arrow buttons to move
+  and the up button to jump.<br>
+  Collect gold coins, jump across platforms, and avoid
+  the red enemies. Falling or touching an enemy ends the run.
+  Your best score saves on this device.
+</div>
 
 <script>
-let game = {
-  coins: 0,
-  totalCoins: 0,
-  points: 0,
-  highScore: 0,
-  clickLevel: 0,
-  factoryLevel: 0,
-  multiplierLevel: 0
-};
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
 
-function loadGame() {
-  try {
-    let saved = localStorage.getItem("clickerEmpire");
+const W = canvas.width;
+const H = canvas.height;
 
-    if (saved) {
-      let data = JSON.parse(saved);
+let keys = {};
+let camera = 0;
+let score = 0;
+let coins = 0;
+let best = 0;
+let gameOver = false;
+let lastTime = 0;
+let jumpWasPressed = false;
 
-      if (data && typeof data === "object") {
-        for (let key in game) {
-          if (Number.isSafeInteger(data[key]) &&
-              data[key] >= 0) {
-            game[key] = data[key];
-          }
-        }
-      }
-    }
-  } catch (error) {
-    console.log("Starting a new game.");
-  }
-
-  game.highScore = Math.max(game.highScore, game.points);
+try {
+  best = Number(localStorage.getItem("coinQuestBest")) || 0;
+} catch (error) {
+  best = 0;
 }
 
-function saveGame() {
-  try {
-    localStorage.setItem("clickerEmpire", JSON.stringify(game));
-  } catch (error) {
-    console.log("Could not save progress.");
-  }
-}
+document.getElementById("best").textContent = best;
 
-function clickPower() {
-  return (1 + game.clickLevel) *
-    Math.pow(2, game.multiplierLevel);
-}
+// The world is wider than the screen.
+const platforms = [
+  {x: 0, y: 420, w: 500, h: 100},
+  {x: 590, y: 350, w: 190, h: 25},
+  {x: 870, y: 290, w: 190, h: 25},
+  {x: 1150, y: 365, w: 210, h: 25},
+  {x: 1450, y: 300, w: 180, h: 25},
+  {x: 1710, y: 355, w: 220, h: 25},
+  {x: 2010, y: 275, w: 200, h: 25},
+  {x: 2310, y: 370, w: 350, h: 100}
+];
 
-function factoryIncome() {
-  return game.factoryLevel * 2;
-}
+const coinSpots = [
+  [160, 375], [220, 375], [280, 375],
+  [630, 305], [690, 305], [740, 305],
+  [910, 245], [970, 245], [1020, 245],
+  [1200, 320], [1270, 320],
+  [1490, 255], [1550, 255],
+  [1760, 310], [1830, 310],
+  [2060, 230], [2120, 230],
+  [2390, 325], [2460, 325], [2530, 325]
+];
 
-function earnCoins() {
-  let amount = clickPower();
+const originalCoins = coinSpots.map(function(point) {
+  return {x: point[0], y: point[1], taken: false};
+});
 
-  game.coins += amount;
-  game.totalCoins += amount;
-  game.points += amount;
+let worldCoins = [];
 
-  document.getElementById("message").textContent =
-    "+" + amount + " coins and points!";
+const originalEnemies = [
+  {x: 340, y: 390, min: 300, max: 460, speed: 55},
+  {x: 900, y: 260, min: 880, max: 1030, speed: 45},
+  {x: 1490, y: 270, min: 1460, max: 1590, speed: 50},
+  {x: 1760, y: 325, min: 1730, max: 1890, speed: 55},
+  {x: 2390, y: 340, min: 2330, max: 2580, speed: 60}
+];
 
-  updateScreen();
-}
+let enemies = [];
 
-function upgradeCost(type) {
-  if (type === "click") {
-    return Math.floor(25 * Math.pow(1.7, game.clickLevel));
-  }
+let player;
 
-  if (type === "factory") {
-    return Math.floor(50 * Math.pow(1.8, game.factoryLevel));
-  }
-
-  return Math.floor(250 * Math.pow(3, game.multiplierLevel));
-}
-
-function buyUpgrade(type) {
-  let cost = upgradeCost(type);
-
-  if (game.coins < cost) {
-    document.getElementById("message").textContent =
-      "Not enough coins yet!";
-    return;
-  }
-
-  game.coins -= cost;
-
-  if (type === "click") {
-    game.clickLevel++;
-  }
-
-  if (type === "factory") {
-    game.factoryLevel++;
-  }
-
-  if (type === "multiplier") {
-    game.multiplierLevel++;
-  }
-
-  document.getElementById("message").textContent =
-    "Upgrade purchased! Keep earning points.";
-
-  updateScreen();
-}
-
-function updateScreen() {
-  game.highScore = Math.max(game.highScore, game.points);
-
-  document.getElementById("coins").textContent =
-    Math.floor(game.coins).toLocaleString();
-
-  document.getElementById("points").textContent =
-    game.points.toLocaleString();
-
-  document.getElementById("highScore").textContent =
-    game.highScore.toLocaleString();
-
-  document.getElementById("totalPoints").textContent =
-    game.points.toLocaleString();
-
-  document.getElementById("totalCoins").textContent =
-    game.totalCoins.toLocaleString();
-
-  document.getElementById("power").textContent =
-    clickPower().toLocaleString();
-
-  document.getElementById("income").textContent =
-    factoryIncome().toLocaleString();
-
-  document.getElementById("incomeStat").textContent =
-    factoryIncome().toLocaleString();
-
-  document.getElementById("clickLevel").textContent =
-    game.clickLevel;
-
-  document.getElementById("factoryLevel").textContent =
-    game.factoryLevel;
-
-  document.getElementById("multiplierLevel").textContent =
-    game.multiplierLevel;
-
-  document.getElementById("level").textContent =
-    Math.floor(game.points / 100) + 1;
-
-  document.getElementById("clickBuy").textContent =
-    upgradeCost("click").toLocaleString() + " 🪙";
-
-  document.getElementById("factoryBuy").textContent =
-    upgradeCost("factory").toLocaleString() + " 🪙";
-
-  document.getElementById("multiplierBuy").textContent =
-    upgradeCost("multiplier").toLocaleString() + " 🪙";
-
-  document.getElementById("clickBuy").disabled =
-    game.coins < upgradeCost("click");
-
-  document.getElementById("factoryBuy").disabled =
-    game.coins < upgradeCost("factory");
-
-  document.getElementById("multiplierBuy").disabled =
-    game.coins < upgradeCost("multiplier");
-
-  document.getElementById("bronze").textContent =
-    game.points >= 100 ? "🥉 Bronze achievement unlocked!" :
-    "🔒 Bronze: Earn 100 points";
-
-  document.getElementById("silver").textContent =
-    game.points >= 1000 ? "🥈 Silver achievement unlocked!" :
-    "🔒 Silver: Earn 1,000 points";
-
-  document.getElementById("gold").textContent =
-    game.points >= 10000 ? "🥇 Gold achievement unlocked!" :
-    "🔒 Gold: Earn 10,000 points";
-
-  saveGame();
+function newPlayer() {
+  return {
+    x: 60,
+    y: 340,
+    w: 30,
+    h: 40,
+    vx: 0,
+    vy: 0,
+    speed: 230,
+    jump: 440,
+    grounded: false
+  };
 }
 
 function resetGame() {
-  if (confirm("Reset all coins, points, upgrades, and your high score?")) {
-    game = {
-      coins: 0,
-      totalCoins: 0,
-      points: 0,
-      highScore: 0,
-      clickLevel: 0,
-      factoryLevel: 0,
-      multiplierLevel: 0
+  player = newPlayer();
+  worldCoins = originalCoins.map(function(coin) {
+    return {...coin};
+  });
+  enemies = originalEnemies.map(function(enemy) {
+    return {...enemy, direction: 1};
+  });
+
+  score = 0;
+  coins = 0;
+  camera = 0;
+  gameOver = false;
+  jumpWasPressed = false;
+  lastTime = 0;
+
+  document.getElementById("coins").textContent = coins;
+  document.getElementById("score").textContent = score;
+}
+
+function updateHUD() {
+  document.getElementById("coins").textContent = coins;
+  document.getElementById("score").textContent = score;
+  document.getElementById("best").textContent = best;
+}
+
+function endGame() {
+  if (gameOver) return;
+
+  gameOver = true;
+
+  if (score > best) {
+    best = score;
+
+    try {
+      localStorage.setItem("coinQuestBest", best);
+    } catch (error) {
+      // The game still works if saving is unavailable.
+    }
+  }
+
+  updateHUD();
+}
+
+function overlap(a, b) {
+  return a.x < b.x + b.w &&
+         a.x + a.w > b.x &&
+         a.y < b.y + b.h &&
+         a.y + a.h > b.y;
+}
+
+function update(dt) {
+  if (gameOver) return;
+
+  // Move left and right.
+  player.vx = 0;
+
+  if (keys.ArrowLeft || keys.KeyA) {
+    player.vx = -player.speed;
+  }
+
+  if (keys.ArrowRight || keys.KeyD) {
+    player.vx = player.speed;
+  }
+
+  // Jump only when on a platform.
+  let jumpPressed =
+    keys.Space || keys.ArrowUp || keys.KeyW;
+
+  if (jumpPressed && !jumpWasPressed && player.grounded) {
+    player.vy = -player.jump;
+    player.grounded = false;
+  }
+
+  jumpWasPressed = jumpPressed;
+
+  // Horizontal collision with platforms.
+  player.x += player.vx * dt;
+
+  for (let platform of platforms) {
+    if (overlap(player, platform)) {
+      if (player.vx > 0) {
+        player.x = platform.x - player.w;
+      } else if (player.vx < 0) {
+        player.x = platform.x + platform.w;
+      }
+    }
+  }
+
+  // Gravity and vertical movement.
+  player.vy += 1100 * dt;
+  let oldBottom = player.y + player.h;
+  player.y += player.vy * dt;
+  player.grounded = false;
+
+  for (let platform of platforms) {
+    if (overlap(player, platform)) {
+      if (player.vy > 0 && oldBottom <= platform.y + 5) {
+        player.y = platform.y - player.h;
+        player.vy = 0;
+        player.grounded = true;
+      } else if (player.vy < 0) {
+        player.y = platform.y + platform.h;
+        player.vy = 0;
+      }
+    }
+  }
+
+  // Collect coins.
+  for (let coin of worldCoins) {
+    if (!coin.taken) {
+      let coinBox = {
+        x: coin.x - 10,
+        y: coin.y - 10,
+        w: 20,
+        h: 20
+      };
+
+      if (overlap(player, coinBox)) {
+        coin.taken = true;
+        coins++;
+        score += 10;
+        updateHUD();
+      }
+    }
+  }
+
+  // Move enemies back and forth.
+  for (let enemy of enemies) {
+    enemy.x += enemy.speed * enemy.direction * dt;
+
+    if (enemy.x < enemy.min || enemy.x > enemy.max) {
+      enemy.direction *= -1;
+    }
+
+    let enemyBox = {
+      x: enemy.x,
+      y: enemy.y,
+      w: 30,
+      h: 30
     };
 
-    updateScreen();
+    if (overlap(player, enemyBox)) {
+      endGame();
+    }
+  }
 
-    document.getElementById("message").textContent =
-      "A new empire begins!";
+  // Falling off the world ends the run.
+  if (player.y > H + 150) {
+    endGame();
+  }
+
+  // Scroll the world as the player moves.
+  camera = Math.max(
+    0,
+    Math.min(player.x - 250, 1760)
+  );
+}
+
+function drawBackground() {
+  let sky = ctx.createLinearGradient(0, 0, 0, H);
+  sky.addColorStop(0, "#48b9ff");
+  sky.addColorStop(1, "#c9f1ff");
+
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, W, H);
+
+  // Distant mountains.
+  ctx.fillStyle = "#83c8e5";
+  for (let i = 0; i < 9; i++) {
+    let x = i * 180 - (camera * 0.2 % 180);
+
+    ctx.beginPath();
+    ctx.moveTo(x - 100, 420);
+    ctx.lineTo(x + 80, 180);
+    ctx.lineTo(x + 260, 420);
+    ctx.fill();
+  }
+
+  // Clouds.
+  ctx.fillStyle = "white";
+  for (let i = 0; i < 8; i++) {
+    let x = (i * 170 - camera * 0.35 % 170 + 170) % 1050 - 50;
+    let y = 70 + (i % 3) * 50;
+
+    ctx.beginPath();
+    ctx.arc(x, y, 22, 0, Math.PI * 2);
+    ctx.arc(x + 25, y - 12, 28, 0, Math.PI * 2);
+    ctx.arc(x + 52, y, 22, 0, Math.PI * 2);
+    ctx.fill();
   }
 }
 
-loadGame();
-updateScreen();
+function drawPlatform(platform) {
+  let x = platform.x - camera;
 
-setInterval(function() {
-  let earned = factoryIncome();
+  if (x + platform.w < 0 || x > W) return;
 
-  if (earned > 0) {
-    game.coins += earned;
-    game.totalCoins += earned;
-    game.points += earned;
-    updateScreen();
+  // Dirt.
+  ctx.fillStyle = "#966035";
+  ctx.fillRect(x, platform.y, platform.w, platform.h);
+
+  // Dirt pattern.
+  ctx.fillStyle = "#704325";
+  for (let i = 0; i < platform.w; i += 35) {
+    ctx.fillRect(x + i, platform.y + 18, 17, 10);
+    ctx.fillRect(x + i + 17, platform.y + 40, 12, 8);
   }
-}, 1000);
+
+  // Grass top.
+  ctx.fillStyle = "#41b94d";
+  ctx.fillRect(x, platform.y, platform.w, 10);
+
+  ctx.fillStyle = "#80e75a";
+  for (let i = 0; i < platform.w; i += 25) {
+    ctx.fillRect(x + i, platform.y - 4, 15, 7);
+  }
+}
+
+function drawCoin(coin) {
+  let x = coin.x - camera;
+
+  if (x < -30 || x > W + 30) return;
+
+  ctx.fillStyle = "#c47a00";
+  ctx.beginPath();
+  ctx.ellipse(x, coin.y, 12, 16, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = "#ffdf38";
+  ctx.beginPath();
+  ctx.ellipse(x, coin.y, 8, 12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = "#fff2a1";
+  ctx.fillRect(x - 3, coin.y - 7, 3, 14);
+}
+
+function drawPlayer() {
+  let x = player.x - camera;
+  let y = player.y;
+
+  // Body.
+  ctx.fillStyle = "#2864e8";
+  ctx.fillRect(x + 4, y + 14, 23, 20);
+
+  // Head.
+  ctx.fillStyle = "#ffcb91";
+  ctx.fillRect(x + 5, y, 22, 19);
+
+  // Hair.
+  ctx.fillStyle = "#57321f";
+  ctx.fillRect(x + 4, y - 3, 23, 7);
+  ctx.fillRect(x, y + 2, 8, 8);
+
+  // Eye.
+  ctx.fillStyle = "#222";
+  ctx.fillRect(x + 20, y + 7, 3, 4);
+
+  // Legs.
+  ctx.fillStyle = "#253a6b";
+  ctx.fillRect(x + 5, y + 33, 9, 7);
+  ctx.fillRect(x + 19, y + 33, 9, 7);
+
+  // Shoes.
+  ctx.fillStyle = "#f5f5f5";
+  ctx.fillRect(x + 2, y + 37, 12, 3);
+  ctx.fillRect(x + 17, y + 37, 12, 3);
+}
+
+function drawEnemy(enemy) {
+  let x = enemy.x - camera;
+
+  if (x < -50 || x > W + 50) return;
+
+  // Cartoon red enemy.
+  ctx.fillStyle = "#d93b55";
+  ctx.beginPath();
+  ctx.arc(x + 15, enemy.y + 15, 15, Math.PI, 0);
+  ctx.lineTo(x + 30, enemy.y + 25);
+  ctx.lineTo(x, enemy.y + 25);
+  ctx.fill();
+
+  ctx.fillStyle = "white";
+  ctx.fillRect(x + 17, enemy.y + 8, 5, 7);
+
+  ctx.fillStyle = "#222";
+  ctx.fillRect(x + 20, enemy.y + 10, 2, 4);
+}
+
+function draw() {
+  drawBackground();
+
+  for (let platform of platforms) {
+    drawPlatform(platform);
+  }
+
+  for (let coin of worldCoins) {
+    if (!coin.taken) drawCoin(coin);
+  }
+
+  for (let enemy of enemies) {
+    drawEnemy(enemy);
+  }
+
+  drawPlayer();
+
+  if (gameOver) {
+    ctx.fillStyle = "rgba(10, 15, 35, 0.8)";
+    ctx.fillRect(0, 0, W, H);
+
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#ffdc57";
+    ctx.font = "bold 48px Arial";
+    ctx.fillText("GAME OVER", W / 2, H / 2 - 35);
+
+    ctx.fillStyle = "white";
+    ctx.font = "24px Arial";
+    ctx.fillText("Score: " + score, W / 2, H / 2 + 10);
+
+    ctx.font = "18px Arial";
+    ctx.fillText("Press Restart Game to play again", W / 2, H / 2 + 50);
+  }
+}
+
+function loop(time) {
+  if (!lastTime) lastTime = time;
+
+  // Prevent huge physics jumps if the tab pauses.
+  let dt = Math.min((time - lastTime) / 1000, 0.03);
+  lastTime = time;
+
+  update(dt);
+  draw();
+
+  requestAnimationFrame(loop);
+}
+
+// Keyboard controls.
+window.addEventListener("keydown", function(event) {
+  if ([
+    "ArrowLeft", "ArrowRight", "ArrowUp",
+    "Space", "KeyA", "KeyD", "KeyW"
+  ].includes(event.code)) {
+    event.preventDefault();
+  }
+
+  keys[event.code] = true;
+});
+
+window.addEventListener("keyup", function(event) {
+  keys[event.code] = false;
+});
+
+window.addEventListener("blur", function() {
+  keys = {};
+});
+
+// Touch and mouse controls.
+function setupButton(id, key) {
+  let button = document.getElementById(id);
+
+  button.addEventListener("pointerdown", function(event) {
+    event.preventDefault();
+    keys[key] = true;
+    button.setPointerCapture(event.pointerId);
+  });
+
+  function release() {
+    keys[key] = false;
+  }
+
+  button.addEventListener("pointerup", release);
+  button.addEventListener("pointercancel", release);
+  button.addEventListener("lostpointercapture", release);
+}
+
+setupButton("left", "ArrowLeft");
+setupButton("right", "ArrowRight");
+setupButton("jump", "Space");
+
+document.getElementById("restart").addEventListener("click", resetGame);
+
+resetGame();
+requestAnimationFrame(loop);
 </script>
 
 </body>
